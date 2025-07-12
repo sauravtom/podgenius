@@ -126,7 +126,7 @@ def chat_input():
         value=state.input,
         autosize=True,
         min_rows=4,
-        placeholder="Enter some keywords (comma separated) ",
+        placeholder="Enter some keywords (comma separated) and style (eg. speak in spanish like a pirate) ",
         style=me.Style(
           padding=me.Padding(top=16, left=16),
           background="white",

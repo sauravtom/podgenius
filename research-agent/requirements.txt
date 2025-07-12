@@ -1,0 +1,5 @@
+a2a>=0.1.0
+openai>=1.0.0
+exa-py>=1.0.0
+python-dotenv>=1.0.0
+a2a-server

@@ -1,0 +1,10 @@
+[project]
+name = "exa-summary-agent"
+version = "0.1.0"
+dependencies = [
+  "openai>=1.0.0",
+  "exa-py",
+  "python-dotenv",
+  "a2a",
+]
+
