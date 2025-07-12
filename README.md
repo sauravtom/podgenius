@@ -20,7 +20,7 @@ A web application built with Mesop that generates personalized podcast recommend
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd wandhack
+cd podgenius
 ```
 
 2. Install the required dependencies:
@@ -28,11 +28,17 @@ cd wandhack
 pip install -r requirements.txt
 ```
 
+3. Set up environment variables:
+```bash
+cp .env.sample .env
+```
+Edit the `.env` file and update the values with your actual configuration.
+
 ## Usage
 
 1. Start the application:
 ```bash
-python main.py
+mesop main.py
 ```
 
 2. Open your web browser and navigate to the provided local URL
@@ -46,9 +52,23 @@ python main.py
 ```
 .
 ├── main.py          # Main application file containing the UI and logic
-├── README.md        # Project documentation
+├── .env.sample      # Template for environment variables
+├── .env            # Local environment variables (not tracked in git)
+├── .gitignore      # Git ignore configuration
+├── README.md       # Project documentation
 └── requirements.txt # Python dependencies
 ```
+
+## Environment Variables
+
+The following environment variables can be configured in your `.env` file:
+
+- `API_KEY`: Your API key for external services
+- `API_ENDPOINT`: The endpoint URL for the API
+- `PORT`: The port number for the local server
+- `HOST`: The host address for the local server
+- `DEBUG`: Enable/disable debug mode
+- `ENVIRONMENT`: The current environment (development/production)
 
 ## Contributing
 
