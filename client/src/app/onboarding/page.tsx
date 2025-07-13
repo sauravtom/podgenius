@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,6 @@ const steps = [
 
 export default function OnboardingPage() {
   const { user } = useUser();
-  const { signOut } = useClerk();
   const router = useRouter();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
@@ -106,7 +105,7 @@ export default function OnboardingPage() {
         description: "Welcome to Podgenius. You're all set to start generating podcasts.",
       });
       
-      await signOut({ redirectUrl: '/dashboard' });
+      router.push('/dashboard');
     } catch (error) {
       toast({
         title: "Error",
