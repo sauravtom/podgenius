@@ -229,6 +229,14 @@ export default function OnboardingPage() {
     }
   };
 
+  useEffect(() => {
+    router.push('/dashboard');
+  }, [router]);
+
+  return null; // Render nothing, as we are redirecting immediately
+
+  /*
+  // Original onboarding rendering logic (commented out)
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-pink-950/20">
       <div className="container py-8">
@@ -316,4 +324,6 @@ export default function OnboardingPage() {
       </div>
     </div>
   );
+  */
+}
 } 
