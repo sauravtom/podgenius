@@ -21,24 +21,29 @@ This guide explains how to deploy the Podgenius Next.js application using Docker
    Create a `.env` file in the root directory with the following variables:
 
    ```env
+   # Application Base URL
+   NEXT_PUBLIC_BASE_URL=http://localhost:3000
+   
    # Clerk Authentication
    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_your_publishable_key_here
    CLERK_SECRET_KEY=sk_test_your_secret_key_here
    NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
    NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
    NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
-   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/onboarding
+   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 
-   # OpenAI API
-   OPENAI_API_KEY=sk-your_openai_api_key_here
-
-   # Exa API (for research)
+   # AI APIs
    EXA_API_KEY=your_exa_api_key_here
+   OPENAI_API_KEY=sk-your_openai_api_key_here
 
    # Google APIs (for YouTube upload and Gmail/Calendar integration)
    GOOGLE_CLIENT_ID=your_google_client_id_here
    GOOGLE_CLIENT_SECRET=your_google_client_secret_here
-   GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback
+   GOOGLE_REDIRECT_URI=http://localhost:3000
+
+   # YouTube (Optional - for video uploads)
+   YOUTUBE_API_KEY=your_youtube_api_key_here
+   YOUTUBE_CHANNEL_ID=your_youtube_channel_id_here
 
    # Node Environment
    NODE_ENV=production
