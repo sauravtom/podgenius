@@ -11,12 +11,12 @@ WORKDIR /app
 
 # Copy package files from client directory
 COPY client/package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --force && npm cache clean --force
 
 # Development stage
 FROM base AS deps
 COPY client/package*.json ./
-RUN npm ci
+RUN npm install --force
 
 # Build stage
 FROM base AS builder
