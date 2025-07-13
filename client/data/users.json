@@ -11,5 +11,17 @@
     "calendarConnected": false,
     "onboardingCompleted": true,
     "onboardingStep": 3
+  },
+  "user_2zpPR2FnYFzF95ZXhPggn0MrUBi": {
+    "userId": "user_2zpPR2FnYFzF95ZXhPggn0MrUBi",
+    "interests": [
+      "Business",
+      "Artificial Intelligence",
+      "Science"
+    ],
+    "gmailConnected": false,
+    "calendarConnected": false,
+    "onboardingCompleted": true,
+    "onboardingStep": 3
   }
 }
