@@ -133,6 +133,36 @@ export default function OnboardingPage() {
     }
   };
 
+  const skipOnboarding = async () => {
+    setIsLoading(true);
+    try {
+      await fetch('/api/user/complete-onboarding', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.id}`,
+        },
+        body: JSON.stringify({ skipped: true }), // Indicate that onboarding was skipped
+      });
+      
+      toast({
+        title: "Onboarding Skipped!",
+        description: "You can always complete your setup later from the dashboard.",
+      });
+      
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error skipping onboarding:', error);
+      toast({
+        title: "Error",
+        description: "Failed to skip onboarding. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const nextStep = async () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -270,6 +300,17 @@ export default function OnboardingPage() {
               {currentStep === steps.length - 1 ? "Complete Setup" : "Next"}
               <ArrowRight className="h-4 w-4" />
             </Button>
+
+            {currentStep < steps.length - 1 && (
+              <Button
+                variant="ghost"
+                onClick={skipOnboarding}
+                disabled={isLoading}
+                className="ml-2"
+              >
+                Skip Onboarding
+              </Button>
+            )}
           </div>
         </div>
       </div>
