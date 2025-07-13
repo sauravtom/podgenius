@@ -44,11 +44,15 @@ async function saveUsers(users: Record<string, UserData>) {
 }
 
 export async function getUserData(userId: string): Promise<UserData | null> {
+  console.log(`[Storage] Getting user data for: ${userId}`);
   const users = await loadUsers();
-  return users[userId] || null;
+  const userData = users[userId] || null;
+  console.log(`[Storage] User data found:`, userData);
+  return userData;
 }
 
 export async function setUserData(userId: string, data: Partial<UserData>) {
+  console.log(`[Storage] Setting user data for: ${userId}`, data);
   const users = await loadUsers();
   const defaults = {
     userId,
@@ -65,9 +69,11 @@ export async function setUserData(userId: string, data: Partial<UserData>) {
     ...data 
   };
   await saveUsers(users);
+  console.log(`[Storage] User data saved for: ${userId}`, users[userId]);
   return users[userId];
 }
 
 export async function updateUserData(userId: string, data: Partial<UserData>) {
+  console.log(`[Storage] Updating user data for: ${userId}`, data);
   return await setUserData(userId, data);
 } 

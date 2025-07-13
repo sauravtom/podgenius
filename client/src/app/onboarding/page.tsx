@@ -41,30 +41,38 @@ export default function OnboardingPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const checkOnboardingStatus = useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
+      console.log('[Onboarding Page] Checking onboarding status for user:', user.id);
       const response = await fetch('/api/user/onboarding-status', {
         headers: {
-          'Authorization': `Bearer ${user?.id}`,
+          'Authorization': `Bearer ${user.id}`,
         },
       });
       const data = await response.json();
+      console.log('[Onboarding Page] Onboarding status response:', data);
       
       if (data.completed) {
+        console.log('[Onboarding Page] Onboarding completed, redirecting to dashboard');
         router.push('/dashboard');
-      } else if (data.step) {
+      } else if (data.step !== undefined) {
+        console.log('[Onboarding Page] Setting step to:', data.step);
         setCurrentStep(data.step);
-        setOnboardingData(data.data || onboardingData);
+        if (data.data) {
+          setOnboardingData(data.data);
+        }
       }
     } catch (error) {
-      console.error('Error checking onboarding status:', error);
+      console.error('[Onboarding Page] Error checking onboarding status:', error);
     }
-  }, [user?.id, router, onboardingData]);
+  }, [user?.id, router]);
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       checkOnboardingStatus();
     }
-  }, [user, checkOnboardingStatus]);
+  }, [user?.id, checkOnboardingStatus]);
 
   const updateOnboardingData = (key: keyof OnboardingData, value: any) => {
     setOnboardingData(prev => ({ ...prev, [key]: value }));
@@ -91,7 +99,7 @@ export default function OnboardingPage() {
   const completeOnboarding = async () => {
     setIsLoading(true);
     try {
-      await fetch('/api/user/complete-onboarding', {
+      const response = await fetch('/api/user/complete-onboarding', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,14 +107,22 @@ export default function OnboardingPage() {
         },
         body: JSON.stringify(onboardingData),
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to complete onboarding: ${response.status}`);
+      }
       
       toast({
         title: "Onboarding Complete!",
         description: "Welcome to Podgenius. You're all set to start generating podcasts.",
       });
       
+      // Add a small delay to ensure the data is properly saved before redirecting
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       router.push('/dashboard');
     } catch (error) {
+      console.error('Error completing onboarding:', error);
       toast({
         title: "Error",
         description: "Failed to complete onboarding. Please try again.",
