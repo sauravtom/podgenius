@@ -66,4 +66,8 @@ src/
 .parcel-cache
 
 # Misc
-.vercel 
+.vercel
+
+# YouTube OAuth2 files (keep private)
+hackathon_client_secrets.json
+token.json 

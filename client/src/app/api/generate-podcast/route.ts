@@ -7,6 +7,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import { currentUser } from '@clerk/nextjs/server';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -14,16 +15,37 @@ const openai = new OpenAI({
 
 const exa = new Exa(process.env.EXA_API_KEY);
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
-);
+// YouTube API setup with OAuth2 credentials from environment variables
+let youtube: any = null;
 
-const youtube = google.youtube({
-  version: 'v3',
-  auth: oauth2Client,
-});
+try {
+  if (process.env.GOOGLE_ACCESS_TOKEN && process.env.GOOGLE_REFRESH_TOKEN) {
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_TOKEN_URI
+    );
+    
+    oauth2Client.setCredentials({
+      access_token: process.env.GOOGLE_ACCESS_TOKEN,
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+      scope: process.env.GOOGLE_SCOPES,
+      token_type: 'Bearer',
+      expiry_date: process.env.GOOGLE_TOKEN_EXPIRY ? new Date(process.env.GOOGLE_TOKEN_EXPIRY).getTime() : undefined
+    });
+    
+    youtube = google.youtube({
+      version: 'v3',
+      auth: oauth2Client,
+    });
+    
+    console.log('✅ YouTube OAuth2 credentials loaded from environment variables');
+  } else {
+    console.log('⚠️ Google OAuth2 tokens not found in environment - YouTube upload disabled');
+  }
+} catch (error) {
+  console.error('❌ Error loading YouTube credentials:', error);
+}
 
 async function fetchImageBuffer(imageUrl: string): Promise<Buffer> {
   try {
@@ -91,34 +113,151 @@ async function createVideoBuffer(audioBuffer: Buffer, imageBuffer: Buffer): Prom
   }
 }
 
-async function uploadToYouTube(videoBuffer: Buffer, title: string, description: string): Promise<{ youtubeUrl: string; videoId: string }> {
-  const video = {
-    snippet: {
-      title,
-      description,
-      tags: ['podcast', 'ai-generated', 'news'],
-      categoryId: '22',
-    },
-    status: {
-      privacyStatus: 'private',
-    },
-  };
+async function getOrCreatePlaylist(playlistTitle: string, playlistDescription: string = "Auto-created playlist"): Promise<string> {
+  try {
+    const playlists = await youtube.playlists.list({
+      part: ['snippet'],
+      mine: true,
+      maxResults: 50,
+    });
 
-  const media = {
-    body: Readable.from(videoBuffer),
-  };
+    const existingPlaylist = playlists.data.items?.find(
+      (item: any) => item.snippet?.title === playlistTitle
+    );
 
-  const response = await youtube.videos.insert({
-    part: ['snippet', 'status'],
-    requestBody: video,
-    media,
+    if (existingPlaylist) {
+      return existingPlaylist.id!;
+    }
+
+    const response = await youtube.playlists.insert({
+      part: ['snippet', 'status'],
+      requestBody: {
+        snippet: {
+          title: playlistTitle,
+          description: playlistDescription,
+        },
+        status: {
+          privacyStatus: 'public',
+        },
+      },
+    });
+
+    return response.data.id!;
+  } catch (error) {
+    console.error('Error managing playlist:', error);
+    throw error;
+  }
+}
+
+async function addVideoToPlaylist(playlistId: string, videoId: string): Promise<void> {
+  try {
+    await youtube.playlistItems.insert({
+      part: ['snippet'],
+      requestBody: {
+        snippet: {
+          playlistId,
+          resourceId: {
+            kind: 'youtube#video',
+            videoId,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Error adding video to playlist:', error);
+    throw error;
+  }
+}
+
+function isYouTubeConfigured(): boolean {
+  const hasTokens = !!(process.env.GOOGLE_ACCESS_TOKEN && process.env.GOOGLE_REFRESH_TOKEN);
+  const hasYouTubeClient = youtube !== null;
+  
+  console.log('YouTube Configuration Check:', {
+    hasTokens,
+    hasYouTubeClient,
   });
+  
+  return hasTokens && hasYouTubeClient;
+}
 
-  const videoId = response.data.id!;
-  return {
-    youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`,
-    videoId,
-  };
+async function uploadToYouTube(videoBuffer: Buffer, title: string, description: string, keywords: string[], username: string = 'AI User'): Promise<{ youtubeUrl: string; videoId: string; playlistUrl?: string }> {
+  if (!isYouTubeConfigured()) {
+    throw new Error('YouTube upload not configured. Run youtube_auth_setup.py to authenticate.');
+  }
+
+  const tempDir = os.tmpdir();
+  const videoPath = path.join(tempDir, `upload-${Date.now()}.mp4`);
+  
+  try {
+    console.log(`📊 Preparing video upload: ${videoBuffer.length} bytes`);
+    fs.writeFileSync(videoPath, videoBuffer);
+    
+    if (!fs.existsSync(videoPath)) {
+      throw new Error(`Failed to create temporary video file: ${videoPath}`);
+    }
+    
+    const enhancedDescription = `
+This podcast was generated by AI using the latest research on: ${keywords.join(', ')}.
+
+Generated with Podgenius - AI-powered podcast creation.
+Topics covered: ${keywords.join(', ')}`;
+
+    const video = {
+      snippet: {
+        title,
+        description: enhancedDescription,
+        tags: [...keywords, 'podcast', 'ai-generated', 'news', 'podgenius'],
+        categoryId: '22',
+      },
+      status: {
+        privacyStatus: 'public',
+      },
+    };
+
+    console.log('📤 Starting YouTube upload...');
+    const response = await youtube.videos.insert({
+      part: ['snippet', 'status'],
+      requestBody: video,
+      media: {
+        body: fs.createReadStream(videoPath),
+      },
+    });
+
+    const videoId = response.data.id!;
+    const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    console.log('✅ YouTube upload successful:', youtubeUrl);
+    
+    let playlistUrl: string | undefined;
+    
+    try {
+      const playlistTitle = `${username}'s AI Podcast Collection`;
+      const playlistDescription = `AI-generated podcasts created with Podgenius for ${username}`;
+      const playlistId = await getOrCreatePlaylist(playlistTitle, playlistDescription);
+      await addVideoToPlaylist(playlistId, videoId);
+      playlistUrl = `https://www.youtube.com/playlist?list=${playlistId}`;
+      console.log('✅ Video added to playlist:', playlistUrl);
+    } catch (playlistError) {
+      console.warn('⚠️ Failed to add to playlist, but video uploaded successfully:', playlistError);
+    }
+
+    if (fs.existsSync(videoPath)) {
+      fs.unlinkSync(videoPath);
+      console.log('✅ Temporary file cleaned up');
+    }
+
+    return {
+      youtubeUrl,
+      videoId,
+      playlistUrl,
+    };
+  } catch (error) {
+    console.error('❌ YouTube upload error:', error);
+    if (fs.existsSync(videoPath)) {
+      fs.unlinkSync(videoPath);
+    }
+    throw error;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -193,12 +332,29 @@ export async function POST(request: NextRequest) {
         console.log('✅ Video created successfully from buffer');
         
         try {
-          const youtubeResult = await uploadToYouTube(videoBuffer, keywords, researchSummary);
-          youtubeUrl = youtubeResult.youtubeUrl;
-          videoId = youtubeResult.videoId;
-          console.log('✅ Video successfully uploaded to YouTube:', youtubeUrl);
+          if (isYouTubeConfigured()) {
+            const title = `AI Podcast: ${keywords}`;
+            const keywordsArray = keywords.split(',').map((k: string) => k.trim());
+            const user = await currentUser();
+            const username = user?.username ?? user?.firstName ?? user?.lastName ?? 'AI User';
+            
+            const youtubeResult = await uploadToYouTube(videoBuffer, title, researchSummary, keywordsArray, username);
+            youtubeUrl = youtubeResult.youtubeUrl;
+            videoId = youtubeResult.videoId;
+            console.log('✅ Video successfully uploaded to YouTube:', youtubeUrl);
+            if (youtubeResult.playlistUrl) {
+              console.log('✅ Video added to playlist:', youtubeResult.playlistUrl);
+            }
+          } else {
+            console.log('⚠️ YouTube upload skipped: OAuth2 authentication not configured');
+            console.log('💡 To enable YouTube uploads:');
+            console.log('   1. Run: python youtube_auth_setup.py');
+            console.log('   2. Authenticate with your Google account');
+            console.log('   3. Restart the application');
+            console.log('✅ Alternative: Use the download button to save videos and upload manually');
+          }
         } catch (youtubeError) {
-          console.log('⚠️ YouTube upload skipped (credentials not configured):', youtubeError instanceof Error ? youtubeError.message : String(youtubeError));
+          console.log('⚠️ YouTube upload failed:', youtubeError instanceof Error ? youtubeError.message : String(youtubeError));
         }
       } catch (videoError) {
         console.error('❌ Error creating video:', videoError);
