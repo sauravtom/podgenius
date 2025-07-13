@@ -10,22 +10,22 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy package files from client directory
-COPY client/package*.json ./
+COPY package*.json ./
 RUN npm install --force && npm cache clean --force
 
 # Development stage
 FROM base AS deps
-COPY client/package*.json ./
+COPY package*.json ./
 RUN npm install --force
 
 # Build stage
 FROM base AS builder
 WORKDIR /app
-COPY client/package*.json ./
+COPY package*.json ./
 RUN npm install --force
 
 # Copy client source code
-COPY client/ .
+COPY . .
 
 # Build the Next.js application
 RUN npm run build
