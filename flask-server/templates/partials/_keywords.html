@@ -1,0 +1,26 @@
+<div id="keywords-step" style="display: none;">
+    <h2>What do you want to hear about?</h2>
+    <p>Enter a few keywords to get more specific.</p>
+    <form id="keywords-form">
+        <div class="mb-3">
+            <label for="keywords" class="form-label">Keywords</label>
+            <input type="text" class="form-control" id="keywords" placeholder="e.g., AI, machine learning, space exploration">
+        </div>
+        <div id="keyword-suggestions">
+            <small>Suggestions:</small>
+            <a href="#" class="badge bg-secondary text-decoration-none" data-keywords="True crime, unsolved mysteries, serial killer cases">True Crime</a>
+            <a href="#" class="badge bg-secondary text-decoration-none" data-keywords="Investing, financial advice, stock market trends, budgeting">Finance</a>
+            <a href="#" class="badge bg-secondary text-decoration-none" data-keywords="Technology news, AI developments, cryptocurrency, quantum computing">Tech</a>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Generate Podcast</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('keyword-suggestions').addEventListener('click', function(e) {
+        if (e.target.tagName === 'A') {
+            e.preventDefault();
+            document.getElementById('keywords').value = e.target.dataset.keywords;
+        }
+    });
+</script>

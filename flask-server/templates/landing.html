@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}PodGenius: Your Personalized Daily Briefing Podcast{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+    .hero {
+        background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+        color: white;
+        padding: 100px 0;
+        text-align: center;
+    }
+    .hero h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+    }
+    .hero p {
+        font-size: 1.25rem;
+        margin-bottom: 30px;
+    }
+    .features {
+        padding: 80px 0;
+    }
+    .feature-item {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .feature-icon {
+        font-size: 3rem;
+        color: #0d6efd;
+        margin-bottom: 20px;
+    }
+    .pricing {
+        background-color: #ffffff;
+        padding: 80px 0;
+        text-align: center;
+    }
+</style>
+
+<div class="hero">
+    <div class="container">
+        <h1>PodGenius: Your Personalized Daily Briefing Podcast</h1>
+        <p class="lead">Turn your interests into a podcast, in seconds.</p>
+        <p>PodGenius creates customized audio content from the topics, ideas, and trends you care about. It builds episodes just for you, in real time, serving as your personal audio companion.</p>
+        <p><em>Whether you're getting ready for the day, commuting, walking the dog, or simply looking to unplug, PodGenius lets you listen to your world.</em></p>
+        <a href="/login" class="btn btn-light btn-lg">Start Your Free Trial</a>
+    </div>
+</div>
+
+<div class="container features">
+    <h2 class="text-center mb-5">What PodGenius Can Do For You</h2>
+    <div class="row">
+        <div class="col-md-4 feature-item">
+            <div class="feature-icon">&#128198;</div>
+            <h3>Start Your Day with a Personalized Audio Briefing</h3>
+            <p>PodGenius pulls information from your emails, calendar, and the latest news to create a smart, spoken overview of what matters most. Get up to speed on your commute or while you get ready.</p>
+        </div>
+        <div class="col-md-4 feature-item">
+            <div class="feature-icon">&#127911;</div>
+            <h3>Make a Podcast from Any Topic</h3>
+            <p>Just type what you're curious about, and PodGenius generates an interactive episode tailored to you. For example, ask "Explain the basics of AI," "What's happening with the stock market," or "Tell me a story about space exploration."</p>
+        </div>
+        <div class="col-md-4 feature-item">
+            <div class="feature-icon">&#128200;</div>
+            <h3>Follow Trends, Not Noise</h3>
+            <p>PodGenius taps into trusted sources and real-time insights to synthesize what's worth knowing, not just what's trending.</p>
+        </div>
+    </div>
+</div>
+
+<div class="pricing">
+    <div class="container">
+        <h2>Try PodGenius Free for a Limited Time</h2>
+        <p class="lead">Experience PodGenius with a free trial. After the trial period, continue your personalized audio briefings for just $1 per month.</p>
+        <a href="/login" class="btn btn-primary btn-lg">Start Your Free Trial</a>
+    </div>
+</div>
+
+{% endblock %}

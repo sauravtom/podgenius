@@ -6,5 +6,6 @@ dependencies = [
   "exa-py",
   "python-dotenv",
   "a2a",
+  "a2a-sdk[core]>=0.2.11"
 ]
 

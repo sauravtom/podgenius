@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Dashboard</h1>
+    <p>Welcome, {{ user.name }}!</p>
+
+    <div id="onboarding">
+        {% include 'partials/_interests.html' %}
+        {% include 'partials/_keywords.html' %}
+    </div>
+
+    <div id="main-dashboard" style="display: none;">
+        {% include 'partials/_tabs.html' %}
+        <div class="mt-3">
+            <p>Your podcast is ready!</p>
+            <!-- Podcast player will go here -->
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.getElementById('interests-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        document.getElementById('interests-step').style.display = 'none';
+        document.getElementById('keywords-step').style.display = 'block';
+    });
+
+    document.getElementById('keywords-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        document.getElementById('onboarding').style.display = 'none';
+        document.getElementById('main-dashboard').style.display = 'block';
+    });
+</script>
+{% endblock %}
