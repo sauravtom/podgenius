@@ -233,91 +233,91 @@ export default function OnboardingPage() {
 
   /*
   // Original onboarding rendering logic (commented out)
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-pink-950/20">
-      <div className="container py-8">
-        <div className="mx-auto max-w-2xl">
-          {/* Header */}
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold mb-2">Welcome to Podgenius</h1>
-            <p className="text-muted-foreground">Let&apos;s set up your personalized podcast experience</p>
-          </div>
+  // return (
+  //   <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-pink-950/20">
+  //     <div className="container py-8">
+  //       <div className="mx-auto max-w-2xl">
+  //         {/* Header */}
+  //         <div className="mb-8 text-center">
+  //           <h1 className="text-3xl font-bold mb-2">Welcome to Podgenius</h1>
+  //           <p className="text-muted-foreground">Let&apos;s set up your personalized podcast experience</p>
+  //         </div>
 
-          {/* Progress */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex flex-col items-center space-y-2">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                      index < currentStep
-                        ? "border-green-500 bg-green-500 text-white"
-                        : index === currentStep
-                        ? "border-blue-500 bg-blue-500 text-white"
-                        : "border-gray-300 bg-background text-muted-foreground"
-                    }`}
-                  >
-                    {index < currentStep ? (
-                      <CheckCircle className="h-5 w-5" />
-                    ) : (
-                      <span className="text-sm font-medium">{index + 1}</span>
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-medium">{step.title}</div>
-                    <div className="text-xs text-muted-foreground hidden sm:block">{step.description}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
+  //         {/* Progress */}
+  //         <div className="mb-8">
+  //           <div className="flex items-center justify-between mb-4">
+  //             {steps.map((step, index) => (
+  //               <div key={step.id} className="flex flex-col items-center space-y-2">
+  //                 <div
+  //                   className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
+  //                     index < currentStep
+  //                       ? "border-green-500 bg-green-500 text-white"
+  //                       : index === currentStep
+  //                       ? "border-blue-500 bg-blue-500 text-white"
+  //                       : "border-gray-300 bg-background text-muted-foreground"
+  //                   }`}
+  //                 >
+  //                   {index < currentStep ? (
+  //                     <CheckCircle className="h-5 w-5" />
+  //                   ) : (
+  //                     <span className="text-sm font-medium">{index + 1}</span>
+  //                   )}
+  //                 </div>
+  //                 <div className="text-center">
+  //                   <div className="text-sm font-medium">{step.title}</div>
+  //                   <div className="text-xs text-muted-foreground hidden sm:block">{step.description}</div>
+  //                 </div>
+  //               </div>
+  //             ))}
+  //           </div>
+  //           <Progress value={progress} className="h-2" />
+  //         </div>
 
-          {/* Step Content */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>{steps[currentStep].title}</CardTitle>
-              <CardDescription>{steps[currentStep].description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {renderStep()}
-            </CardContent>
-          </Card>
+  //         {/* Step Content */}
+  //         <Card className="mb-8">
+  //           <CardHeader>
+  //             <CardTitle>{steps[currentStep].title}</CardTitle>
+  //             <CardDescription>{steps[currentStep].description}</CardDescription>
+  //           </CardHeader>
+  //           <CardContent>
+  //             {renderStep()}
+  //           </CardContent>
+  //         </Card>
 
-          {/* Navigation */}
-          <div className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 0}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Previous
-            </Button>
+  //         {/* Navigation */}
+  //         <div className="flex justify-between">
+  //           <Button
+  //             variant="outline"
+  //             onClick={prevStep}
+  //             disabled={currentStep === 0}
+  //             className="flex items-center gap-2"
+  //           >
+  //             <ArrowLeft className="h-4 w-4" />
+  //             Previous
+  //           </Button>
 
-            <Button
-              onClick={nextStep}
-              disabled={!canProceed() || isLoading}
-              className="flex items-center gap-2"
-            >
-              {currentStep === steps.length - 1 ? "Complete Setup" : "Next"}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+  //           <Button
+  //             onClick={nextStep}
+  //             disabled={!canProceed() || isLoading}
+  //             className="flex items-center gap-2"
+  //           >
+  //             {currentStep === steps.length - 1 ? "Complete Setup" : "Next"}
+  //             <ArrowRight className="h-4 w-4" />
+  //           </Button>
 
-            {currentStep < steps.length - 1 && (
-              <Button
-                variant="ghost"
-                onClick={skipOnboarding}
-                disabled={isLoading}
-                className="ml-2"
-              >
-                Skip Onboarding
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  //           {currentStep < steps.length - 1 && (
+  //             <Button
+  //               variant="ghost"
+  //               onClick={skipOnboarding}
+  //               disabled={isLoading}
+  //               className="ml-2"
+  //             >
+  //               Skip Onboarding
+  //             </Button>
+  //           )}
+  //         </div>
+  //       </div>
+  //     </div>
+  //   </div>
+  // );
   */ 
