@@ -9,13 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Mail, Plus, Loader2, CheckCircle, Sparkles, Zap, Mic, TrendingUp, Play, Download, Settings } from "lucide-react";
+import { Calendar, Mail, Plus, Loader2, CheckCircle, Sparkles, Zap, Mic, TrendingUp, Play, Download, Settings, Video, ExternalLink, Youtube, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface GenerationResult {
   script: string;
   audioUrl: string | null;
+  videoUrl?: string | null;
+  youtubeUrl?: string | null;
+  videoId?: string | null;
   researchSummary: string;
   timestamp: string;
   keywords: string;
@@ -28,6 +31,19 @@ interface UserData {
   calendar_connected: boolean;
   onboarding_completed: boolean;
 }
+
+const KEYWORD_SUGGESTIONS = [
+  "True crime, unsolved mysteries, serial killer cases",
+  "Investing, financial advice, stock market trends, budgeting",
+  "Technology news, AI developments, cryptocurrency, quantum computing",
+  "Health and wellness, fitness tips, mental health, nutrition",
+  "Business and entrepreneurship, startup stories, leadership",
+  "Science discoveries, space exploration, climate change",
+  "Pop culture, celebrity news, entertainment industry",
+  "Travel destinations, cultural experiences, food and cuisine",
+  "Personal development, productivity, career advice",
+  "Sports analysis, game highlights, athlete interviews"
+];
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -67,6 +83,14 @@ export default function DashboardPage() {
       fetchUserData();
     }
   }, [user, fetchUserData]);
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setKeywords(suggestion);
+    toast({
+      title: "Suggestion Applied",
+      description: "Keywords have been updated with the selected suggestion.",
+    });
+  };
 
   const handleConnectGmail = async () => {
     try {
@@ -141,6 +165,7 @@ export default function DashboardPage() {
   };
 
   const handleGeneratePodcast = async () => {
+    
     if (!keywords.trim()) {
       toast({
         title: "Keywords Required",
@@ -154,29 +179,50 @@ export default function DashboardPage() {
     setGenerationResult(null);
 
     try {
+      console.log("Making API request to /api/generate-podcast");
+      
       const response = await fetch('/api/generate-podcast', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          keywords: keywords,
+          keywords: keywords.trim(),
           userId: user?.id || 'anonymous'
         }),
       });
 
-      const data = await response.json();
+      console.log("Response status:", response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Response error:", errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
-      if (data.success) {
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      if (data.success && data.data) {
         setGenerationResult(data.data);
+        setKeywords("");
+        
+        let description = "Your personalized podcast episode has been created successfully.";
+        if (data.data.youtubeUrl) {
+          description += " Video uploaded to YouTube!";
+        } else if (data.data.videoUrl) {
+          description += " Video created successfully!";
+        }
+        
         toast({
           title: "Podcast Generated!",
-          description: "Your personalized podcast episode has been created successfully.",
+          description,
         });
       } else {
-        throw new Error(data.error || 'Generation failed');
+        throw new Error(data.error || 'Generation failed - no data returned');
       }
     } catch (error) {
+      console.error('Podcast generation error:', error);
       toast({
         title: "Generation Failed",
         description: error instanceof Error ? error.message : "An error occurred while generating the podcast.",
@@ -408,6 +454,141 @@ export default function DashboardPage() {
                       </motion.div>
                     )}
                     
+                    {(generationResult.videoUrl || generationResult.youtubeUrl) && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.25 }}
+                        className="space-y-4"
+                      >
+                        <Label className="text-lg font-semibold flex items-center gap-2">
+                          <Video className="h-5 w-5" />
+                          Generated Video
+                        </Label>
+                        
+                        {generationResult.videoUrl && (
+                          <motion.div
+                            whileHover={{ scale: 1.01 }}
+                            className="glass-card p-4 rounded-xl space-y-3"
+                          >
+                            <div className="text-sm font-medium text-muted-foreground mb-2">Local Video Preview</div>
+                            <video 
+                              controls 
+                              className="w-full rounded-lg shadow-lg max-h-96"
+                              poster="/dog.webp"
+                            >
+                              <source src={generationResult.videoUrl} type="video/mp4" />
+                              Your browser does not support the video element.
+                            </video>
+                            <motion.div
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full glass-card border-primary/20 hover:border-primary/40"
+                                asChild
+                              >
+                                <a 
+                                  href={generationResult.videoUrl} 
+                                  download="podcast-episode.mp4"
+                                  className="flex items-center gap-2"
+                                >
+                                  <Download className="h-4 w-4" />
+                                  Download Video
+                                </a>
+                              </Button>
+                            </motion.div>
+                          </motion.div>
+                        )}
+                        
+                        {generationResult.youtubeUrl && (
+                          <motion.div
+                            whileHover={{ scale: 1.01 }}
+                            className="glass-card p-6 rounded-xl bg-gradient-to-br from-red-50/50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/20 border-red-200/30 dark:border-red-800/30"
+                          >
+                            <div className="flex items-center gap-3 mb-4">
+                              <motion.div
+                                whileHover={{ scale: 1.1, rotate: 5 }}
+                                className="p-2 bg-red-500/10 rounded-full"
+                              >
+                                <Youtube className="h-6 w-6 text-red-600 dark:text-red-400" />
+                              </motion.div>
+                              <div>
+                                <div className="font-semibold text-red-700 dark:text-red-300">
+                                  Successfully Uploaded to YouTube!
+                                </div>
+                                <div className="text-sm text-red-600 dark:text-red-400">
+                                  Your podcast episode is now live
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {generationResult.videoId && (
+                              <div className="mb-4">
+                                <div className="aspect-video rounded-lg overflow-hidden shadow-lg">
+                                  <iframe
+                                    width="100%"
+                                    height="100%"
+                                    src={`https://www.youtube.com/embed/${generationResult.videoId}`}
+                                    title="YouTube video player"
+                                    frameBorder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowFullScreen
+                                    className="rounded-lg"
+                                  ></iframe>
+                                </div>
+                              </div>
+                            )}
+                            
+                            <div className="flex gap-3">
+                              <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                className="flex-1"
+                              >
+                                <Button 
+                                  className="w-full bg-red-600 hover:bg-red-700 text-white border-0 shadow-lg"
+                                  asChild
+                                >
+                                  <a 
+                                    href={generationResult.youtubeUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2"
+                                  >
+                                    <Youtube className="h-4 w-4" />
+                                    Watch on YouTube
+                                  </a>
+                                </Button>
+                              </motion.div>
+                              
+                              <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <Button 
+                                  variant="outline" 
+                                  size="icon"
+                                  className="glass-card border-red-200/50 hover:border-red-300/50 hover:bg-red-50/50 dark:hover:bg-red-950/20"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(generationResult.youtubeUrl || '');
+                                    toast({
+                                      title: "Link Copied!",
+                                      description: "YouTube link copied to clipboard",
+                                    });
+                                  }}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              </motion.div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    )}
+                    
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -485,15 +666,10 @@ export default function DashboardPage() {
                       </Badge>
                     </motion.div>
                   </div>
-                  <motion.div
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Button className="w-full gradient-primary text-white shadow-lg hover:shadow-xl hover:shadow-primary/25 transition-all duration-300 text-lg py-6">
-                      <Sparkles className="mr-2 h-5 w-5" />
-                      View Content
-                    </Button>
-                  </motion.div>
+                  <Button className="w-full gradient-primary text-white shadow-lg hover:shadow-xl hover:shadow-primary/25 transition-all duration-300 text-lg py-6">
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    View Content
+                  </Button>
                 </CardContent>
               </Card>
             </motion.div>
@@ -519,8 +695,44 @@ export default function DashboardPage() {
                 </CardHeader>
                 
                 <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="keywords" className="text-base font-medium">Keywords or Topics</Label>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="keywords" className="text-base font-medium">Keywords or Topics</Label>
+                      <motion.div
+                        whileHover={{ scale: 1.1, rotate: 10 }}
+                        className="text-yellow-500"
+                      >
+                        <Lightbulb className="h-4 w-4" />
+                      </motion.div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="text-sm text-muted-foreground font-medium">Popular Suggestions:</div>
+                      <motion.div 
+                        className="flex flex-wrap gap-2 max-h-32 overflow-y-auto"
+                        variants={containerVariants}
+                      >
+                        {KEYWORD_SUGGESTIONS.slice(0, 6).map((suggestion, index) => (
+                          <motion.div
+                            key={suggestion}
+                            variants={itemVariants}
+                            whileHover={{ scale: 1.05, y: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="glass-card border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 text-xs h-auto py-2 px-3"
+                              onClick={() => handleSuggestionClick(suggestion)}
+                              disabled={isGenerating}
+                            >
+                              {suggestion.length > 50 ? `${suggestion.substring(0, 47)}...` : suggestion}
+                            </Button>
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    </div>
+                    
                     <motion.div
                       whileFocus={{ scale: 1.02 }}
                       transition={{ duration: 0.2 }}
@@ -532,6 +744,7 @@ export default function DashboardPage() {
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setKeywords(e.target.value)}
                         rows={3}
                         className="glass-card border-primary/20 focus:border-primary/40 transition-all duration-300 resize-none"
+                        disabled={isGenerating}
                       />
                     </motion.div>
                   </div>
@@ -540,41 +753,22 @@ export default function DashboardPage() {
                     whileTap={{ scale: 0.98 }}
                   >
                     <Button 
-                      className="w-full gradient-primary text-white shadow-lg hover:shadow-xl hover:shadow-primary/25 transition-all duration-300 text-lg py-6" 
+                      variant="outline"
+                      className="w-full glass-card border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 py-6" 
                       onClick={handleGeneratePodcast}
-                      disabled={isGenerating}
+                      disabled={isGenerating || !keywords.trim()}
                     >
-                      <AnimatePresence mode="wait">
-                        {isGenerating ? (
-                          <motion.div
-                            key="generating"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex items-center"
-                          >
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                              className="mr-2"
-                            >
-                              <Loader2 className="h-5 w-5" />
-                            </motion.div>
-                            Generating Podcast...
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="generate"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex items-center"
-                          >
-                            <Plus className="mr-2 h-5 w-5" />
-                            Generate Podcast
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      {isGenerating ? (
+                        <div className="flex items-center justify-center">
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Generating Podcast...
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center">
+                          <Plus className="mr-2 h-5 w-5" />
+                          Generate Podcast
+                        </div>
+                      )}
                     </Button>
                   </motion.div>
                 </CardContent>
