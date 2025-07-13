@@ -229,10 +229,6 @@ export default function OnboardingPage() {
     }
   };
 
-  useEffect(() => {
-    router.push('/dashboard');
-  }, [router]);
-
   return null; // Render nothing, as we are redirecting immediately
 
   /*
@@ -324,6 +320,4 @@ export default function OnboardingPage() {
       </div>
     </div>
   );
-  */
-}
-} 
+  */ 
