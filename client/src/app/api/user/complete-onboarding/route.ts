@@ -28,7 +28,10 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Complete Onboarding API] Onboarding completed for user: ${userId}`);
 
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.json({
+      success: true,
+      message: 'Onboarding completed successfully'
+    });
 
   } catch (error) {
     console.error('[Complete Onboarding API] Error completing onboarding:', error);
