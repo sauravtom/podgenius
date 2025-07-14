@@ -108,9 +108,7 @@ export function HeroSection() {
           >
             Your Personal{" "}
             <span className="relative inline-block">
-              <span className="text-gradient animate-shimmer">
                 Podcast
-              </span>
               <motion.div
                 className="absolute -inset-1 bg-gradient-primary opacity-20 blur-lg rounded-lg"
                 animate={{
