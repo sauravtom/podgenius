@@ -229,9 +229,89 @@ export default function OnboardingPage() {
     }
   };
 
-  useEffect(() => {
-    router.push('/dashboard');
-  }, [router]);
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
-  return null; // Render nothing, as we are redirecting immediately
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-2xl mx-auto pt-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">
+            Welcome to Podgenius
+          </h1>
+          <p className="text-center text-gray-600 mb-6">
+            Let's set up your personalized podcast experience
+          </p>
+          <Progress value={progress} className="w-full" />
+          <div className="flex justify-between mt-2 text-sm text-gray-500">
+            <span>Step {currentStep + 1} of {steps.length}</span>
+            <span>{steps[currentStep].title}</span>
+          </div>
+        </div>
+
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {currentStep < steps.length - 1 && (
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <span className="text-blue-600 font-semibold">{currentStep + 1}</span>
+                </div>
+              )}
+              {currentStep === steps.length - 1 && (
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              )}
+              {steps[currentStep].title}
+            </CardTitle>
+            <CardDescription>
+              {steps[currentStep].description}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {renderStep()}
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-between mt-6">
+          <Button
+            variant="outline"
+            onClick={prevStep}
+            disabled={currentStep === 0}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Previous
+          </Button>
+          
+          <div className="flex gap-2">
+            {currentStep < steps.length - 1 && (
+              <Button
+                variant="outline"
+                onClick={skipOnboarding}
+                disabled={isLoading}
+              >
+                Skip Setup
+              </Button>
+            )}
+            <Button
+              onClick={nextStep}
+              disabled={!canProceed() || isLoading}
+              className="flex items-center gap-2"
+            >
+              {isLoading ? (
+                "Processing..."
+              ) : currentStep === steps.length - 1 ? (
+                "Complete Setup"
+              ) : (
+                <>
+                  Next
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 } 

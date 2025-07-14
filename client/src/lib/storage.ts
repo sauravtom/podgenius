@@ -1,7 +1,6 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { clerkClient } from '@clerk/nextjs/server';
 
-interface UserData {
+export interface UserData {
   userId: string;
   interests: string[];
   gmailConnected: boolean;
@@ -17,60 +16,70 @@ interface UserData {
   };
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
-
-async function ensureDataDir() {
-  try {
-    await fs.access(DATA_DIR);
-  } catch {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-  }
-}
-
-async function loadUsers(): Promise<Record<string, UserData>> {
-  try {
-    await ensureDataDir();
-    const data = await fs.readFile(USERS_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch {
-    return {};
-  }
-}
-
-async function saveUsers(users: Record<string, UserData>) {
-  await ensureDataDir();
-  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2));
-}
-
 export async function getUserData(userId: string): Promise<UserData | null> {
   console.log(`[Storage] Getting user data for: ${userId}`);
-  const users = await loadUsers();
-  const userData = users[userId] || null;
-  console.log(`[Storage] User data found:`, userData);
-  return userData;
+  
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const metadata = user.privateMetadata as any;
+    
+    if (!metadata || Object.keys(metadata).length === 0) {
+      console.log(`[Storage] No user data found in metadata`);
+      return null;
+    }
+
+    const userData: UserData = {
+      userId,
+      interests: metadata.interests || [],
+      gmailConnected: metadata.gmailConnected || false,
+      calendarConnected: metadata.calendarConnected || false,
+      onboardingCompleted: metadata.onboardingCompleted || false,
+      onboardingStep: metadata.onboardingStep || 0,
+      googleTokens: metadata.googleTokens || undefined,
+    };
+
+    console.log(`[Storage] User data found:`, userData);
+    return userData;
+  } catch (error) {
+    console.error(`[Storage] Error getting user data:`, error);
+    return null;
+  }
 }
 
 export async function setUserData(userId: string, data: Partial<UserData>) {
   console.log(`[Storage] Setting user data for: ${userId}`, data);
-  const users = await loadUsers();
-  const defaults = {
-    userId,
-    interests: [],
-    gmailConnected: false,
-    calendarConnected: false,
-    onboardingCompleted: false,
-    onboardingStep: 0,
-  };
   
-  users[userId] = { 
-    ...defaults,
-    ...users[userId], 
-    ...data 
-  };
-  await saveUsers(users);
-  console.log(`[Storage] User data saved for: ${userId}`, users[userId]);
-  return users[userId];
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const currentMetadata = user.privateMetadata as any;
+    
+    const defaults = {
+      interests: [],
+      gmailConnected: false,
+      calendarConnected: false,
+      onboardingCompleted: false,
+      onboardingStep: 0,
+    };
+    
+    const updatedMetadata = {
+      ...defaults,
+      ...currentMetadata,
+      ...data,
+      userId,
+    };
+
+    await client.users.updateUserMetadata(userId, {
+      privateMetadata: updatedMetadata,
+    });
+
+    console.log(`[Storage] User data saved for: ${userId}`, updatedMetadata);
+    return updatedMetadata as UserData;
+  } catch (error) {
+    console.error(`[Storage] Error setting user data:`, error);
+    throw error;
+  }
 }
 
 export async function updateUserData(userId: string, data: Partial<UserData>) {
